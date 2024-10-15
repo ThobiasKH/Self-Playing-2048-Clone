@@ -20,46 +20,126 @@ def best_move(board, depth):
 # Not really a minimax algorithm since theres only one player
 def minimax(board, depth):
     eval = evaluate_board(board)
-    
-    if depth == 0 or not board.can_move():
-        return evaluate_board(board)  
+    if eval == float('inf') or eval == float('-inf'):
+        return eval
+
+    if depth == 0:
+        return eval
     
     max_eval = float('-inf')
+    
     for direction in ["up", "down", "left", "right"]:
         new_board = play_move(board, direction)  
         if new_board:
             eval = minimax(new_board, depth - 1)
             max_eval = max(max_eval, eval)
+            
+    
     return max_eval
 
+squareMultipliers = {
+    0:2,
+    1:2,
+    2:2,
+    3:2,
+    4:1.25,
+    5:1.25,
+    6:1.25,
+    7:1.25,
+    8:1,
+    9:1,
+    10:1,
+    11:1,
+    12:0.8,
+    13:0.8,
+    14:0.8,
+    15:0.8
+}
+squareScores = {
+    0:0,
+    2:0,
+    4:4,
+    8:11,
+    16:28,
+    32:65,
+    64:141,
+    128:300,
+    256:627,
+    512:1292,
+    1024:2643,
+    2048:5372,
+}
+
+# !BADBADBAD
 def evaluate_board(board):
     if board.win_state == 1:
-        return float('inf')
+        return float('inf') 
     if board.win_state == -1:
-        return float('-inf')
-    
+        return float('-inf')  
+
     highestTileValue = 0
-    boardValue = 0
-    numEmptySquares = 16
+    numEmptySquares = 0
     adjacencyScore = 0
-    
+    smoothness = 0
+    monotonicity = 0
+    sum = 0
+
+    WEIGHT_EMPTY = 1000
+    WEIGHT_MERGING = 200
+    WEIGHT_SMOOTHNESS = 0.1
+    WEIGHT_MONOTONICITY = 50
+    WEIGHT_MAX_TILE = 0.5
+    WEIGHT_SUM = 0.4
+
     for row in range(4):
         for col in range(4):
-            currentTileValue = board.data[row][col]
-            if currentTileValue != 0:
-                numEmptySquares -= 1
-                boardValue += currentTileValue
-                
-                if row < 3 and board.data[row + 1][col] == currentTileValue:
-                    adjacencyScore += 1
-                if col < 3 and board.data[row][col + 1]:
-                    adjacencyScore += 1 
-                
-                if currentTileValue > highestTileValue:
-                    highestTileValue = currentTileValue
-                
-    return (highestTileValue / 2 + adjacencyScore) * pow(numEmptySquares, 2.5)    
+            currentTile = board.data[row][col]
+            currentTileValue = squareScores[currentTile] * squareMultipliers[row * 4 + col]
+            
+            if currentTile == 0:
+                numEmptySquares += 1  
+            else:
+                sum += currentTileValue
+                highestTileValue = max(highestTileValue, currentTile)
 
+                if row < 3:  
+                    downTileValue = board.data[row + 1][col]
+                    if downTileValue != 0:
+                        smoothness += abs(currentTile - downTileValue) / min(currentTile, downTileValue)
+
+                if col < 3:  
+                    rightTileValue = board.data[row][col + 1]
+                    if rightTileValue != 0:
+                        smoothness += abs(currentTile - rightTileValue) / min(currentTile, rightTileValue)
+
+                if row < 3 and board.data[row + 1][col] == currentTile:
+                    adjacencyScore += 1
+                if col < 3 and board.data[row][col + 1] == currentTile:
+                    adjacencyScore += 1
+
+                if row < 3 and currentTile >= board.data[row + 1][col]:
+                    monotonicity += 1  
+                if col < 3 and currentTile >= board.data[row][col + 1]:
+                    monotonicity += 1  
+
+    score = (
+        numEmptySquares * WEIGHT_EMPTY +
+        adjacencyScore * WEIGHT_MERGING +
+        monotonicity * WEIGHT_MONOTONICITY +
+        highestTileValue * WEIGHT_MAX_TILE +
+        sum * WEIGHT_SUM -
+        smoothness * WEIGHT_SMOOTHNESS
+    )
+    
+    if board.data[0][0] == highestTileValue:
+        score *= 2
+        
+    if score < 0:
+        print("OVERFLOW!")
+
+    return score
+
+ 
 def play_move(board, direction):
     new_board = Board()  
     new_board.data = [row[:] for row in board.data]  
