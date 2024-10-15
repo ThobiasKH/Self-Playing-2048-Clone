@@ -1,6 +1,37 @@
 # Memory-Usage Hell Incoming
 from board import Board
-import sys
+
+# Did not work as well as expected
+# def minimax(board, depth, is_maximizing = True):
+    # if depth == 0 or board.win_state != 0:
+        # return evaluate_board(board)
+# 
+    # if is_maximizing:
+        # max_eval = float('-inf')
+        # for direction in ["up", "down", "left", "right"]:
+            # new_board = play_move(board, direction)
+            # if new_board:
+                # eval = minimax(new_board, depth - 1, False)
+                # max_eval = max(max_eval, eval)
+        # return max_eval
+    # else:
+        # empty_tiles = [(r, c) for r in range(4) for c in range(4) if board.data[r][c] == 0]
+        # if not empty_tiles:
+            # return evaluate_board(board)
+# 
+        # total_eval = 0
+        # for row, col in empty_tiles:
+            # board.data[row][col] = 2
+            # eval_2 = minimax(board, depth - 1, True)
+            # total_eval += 0.9 * eval_2
+            # 
+            # board.data[row][col] = 4
+            # eval_4 = minimax(board, depth - 1, True)
+            # total_eval += 0.1 * eval_4
+            # 
+            # board.data[row][col] = 0
+    # 
+        # return total_eval / len(empty_tiles)
 
 def best_move(board, depth):
     best_eval = float('-inf')
@@ -133,6 +164,8 @@ def evaluate_board(board):
     
     if board.data[0][0] == highestTileValue:
         score *= 2
+       
+    score *= 0.9 if board.lastTileThatWasAdded == 2 else 0.1
         
     if score < 0:
         print("OVERFLOW!")

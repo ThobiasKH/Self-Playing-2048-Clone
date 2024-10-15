@@ -20,6 +20,7 @@ class Board:
     def __init__(self):
         self.data = [[0, 0, 0, 0] for _ in range(4)]
         self.win_state = 0
+        self.lastTileThatWasAdded = 2
 
     def clear(self):
         self.win_state = 0
@@ -34,7 +35,9 @@ class Board:
         empty_positions = [(r, c) for r in range(len(self.data)) for c in range(len(self.data[r])) if self.data[r][c] == 0]
         if empty_positions:
             r, c = random.choice(empty_positions)
-            self.data[r][c] = 4 if random.random() < 0.1 else 2 
+            tileToAdd = 4 if random.random() < 0.1 else 2
+            self.data[r][c] = tileToAdd 
+            self.lastTileThatWasAdded = tileToAdd
 
     def can_move(self):
         for row in range(4):
