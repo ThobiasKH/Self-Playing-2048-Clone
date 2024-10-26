@@ -33,9 +33,6 @@ from board import Board
 #
 # return total_eval / len(empty_tiles)
 
-def testFunc(peder):
-    return peder * peder
-
 def best_move(board, depth):
     best_eval = float("-inf")
     best_direction = None
